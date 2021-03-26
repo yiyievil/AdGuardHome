@@ -61,9 +61,8 @@ type homeContext struct {
 	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
 	updater    *updater.Updater
 
-	subnetDetector  *aghnet.SubnetDetector
-	systemResolvers aghnet.SystemResolvers
-	localResolvers  aghnet.Exchanger
+	subnetDetector *aghnet.SubnetDetector
+	localResolvers aghnet.Exchanger
 
 	// mux is our custom http.ServeMux.
 	mux *http.ServeMux
@@ -298,29 +297,32 @@ func collectDNSIPaddrs() (addrs []string, err error) {
 }
 
 func setupResolvers() {
-	// TODO(e.burkov): Enhance when the config will contain local resolvers
-	// addresses.
+	localAddrs := config.DNS.PrivateResolvers
 
-	sysRes, err := aghnet.NewSystemResolvers(0, nil)
+	ourAddrs, err := collectDNSIPaddrs()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	Context.systemResolvers = sysRes
+	if len(localAddrs) == 0 {
+		var sysRes aghnet.SystemResolvers
+		// TODO(e.burkov): Enable the refresher after the actual
+		// implementation passes the public testing.
+		sysRes, err = aghnet.NewSystemResolvers(0, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	var ourAddrs []string
-	ourAddrs, err = collectDNSIPaddrs()
-	if err != nil {
-		log.Fatal(err)
+		localAddrs = sysRes.Get()
 	}
 
-	// TODO(e.burkov): The approach of subtracting sets of strings is not
-	// really applicable here since in case of listening on all network
-	// interfaces we should check the whole interface's network to cut off
-	// all the loopback addresses as well.
-	addrs := stringsSetSubtract(sysRes.Get(), ourAddrs)
+	// TODO(e.burkov): The approach of subtracting sets of strings
+	// is not really applicable here since in case of listening on
+	// all network interfaces we should check the whole interface's
+	// network to cut off all the loopback addresses as well.
+	localAddrs = stringsSetSubtract(localAddrs, ourAddrs)
 
-	Context.localResolvers, err = aghnet.NewMultiAddrExchanger(addrs, defaultLocalTimeout)
+	Context.localResolvers, err = aghnet.NewMultiAddrExchanger(localAddrs, defaultLocalTimeout)
 	if err != nil {
 		log.Fatal(err)
 	}

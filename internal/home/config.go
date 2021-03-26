@@ -98,6 +98,10 @@ type dnsConfig struct {
 	// For example, a machine called "myhost" can be addressed as
 	// "myhost.lan" when AutohostTLD is "lan".
 	AutohostTLD string `yaml:"autohost_tld"`
+
+	// PrivateResolvers is the slice of addresses to be used as upstreams
+	// for queries for locally-served networks.
+	PrivateResolvers []string `yaml:"private_resolvers"`
 }
 
 type tlsConfigSettings struct {
@@ -150,6 +154,7 @@ var config = configuration{
 		FilteringEnabled:           true, // whether or not use filter lists
 		FiltersUpdateIntervalHours: 24,
 		AutohostTLD:                "lan",
+		PrivateResolvers:           []string{},
 	},
 	TLS: tlsConfigSettings{
 		PortHTTPS:       443,

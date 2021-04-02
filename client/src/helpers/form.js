@@ -260,7 +260,14 @@ renderServiceField.propTypes = {
     }).isRequired,
 };
 
-export const getLastIpv4Octet = (ipv4) => parseInt(ipv4.slice(ipv4.lastIndexOf('.') + 1), 10);
+/**
+ *
+ * @param {string} ip
+ * @returns {*}
+ */
+// eslint-disable-next-line no-bitwise
+export const ip4ToInt = (ip) => ip.split('.').reduce((int, oct) => (int * 256) + parseInt(oct, 10), 0) >>> 0;
+
 
 /**
  * @param value {string}

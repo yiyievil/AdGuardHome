@@ -12,7 +12,7 @@ import {
     R_CLIENT_ID,
     R_DOMAIN,
 } from './constants';
-import { getLastIpv4Octet, isValidAbsolutePath } from './form';
+import { ip4ToInt, isValidAbsolutePath } from './form';
 
 // Validation functions
 // https://redux-form.com/8.3.0/examples/fieldlevelvalidation/
@@ -30,8 +30,9 @@ export const validateRequiredValue = (value) => {
 };
 
 /**
- * @param value {string}
  * @returns {undefined|string}
+ * @param _
+ * @param allValues
  */
 export const validateIpv4RangeEnd = (_, allValues) => {
     if (!allValues || !allValues.v4 || !allValues.v4.range_end || !allValues.v4.range_start) {
@@ -40,7 +41,7 @@ export const validateIpv4RangeEnd = (_, allValues) => {
 
     const { range_end, range_start } = allValues.v4;
 
-    if (getLastIpv4Octet(range_end) <= getLastIpv4Octet(range_start)) {
+    if (ip4ToInt(range_end) <= ip4ToInt(range_start)) {
         return 'range_end_error';
     }
 
